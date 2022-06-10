@@ -2,101 +2,140 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
 <meta charset="UTF-8">
-<title>Appli crayons</title>
+<title>Appli pizzas</title>
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css"
+	rel="stylesheet"
+	integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor"
+	crossorigin="anonymous">
 </head>
 <body>
 
 	<div>
-		<input type="button" value="Lister" onclick="lister()" />
+		<input class='btn btn-warning' type="button" value="Ajouter des pizzas" onclick="ajouter()" />
 	</div>
-	
-	<div id="succes" style="color:green"></div>
-	
-	<div id="echec" style="color:red"></div>
+
+	<div id="succes"></div>
+	<table class="table">
+		<thead>
+			<tr>
+
+				<th scope="col">Nom</th>
+				<th scope="col">Description</th>
+				<th scope="col">Prix</th>
+				<th scope="col">Gestion</th>
+			</tr>
+		</thead>
+		<tbody id="listePizzas">
+			
+		</tbody>
+	</table>
+	<div id="echec" style="color: red"></div>
 
 
-<script type="text/javascript">
-	function createXHR() {
-	    if (window.XMLHttpRequest)    //  Objet standard
-	    {
-	        xhr = new XMLHttpRequest();     //  Firefox, Safari, ...
-	    }
-	    else if (window.ActiveXObject)      //  Internet Explorer
-	    {
-	        xhr = new ActiveXObject("Msxml2.XMLHTTP");
-	    }
-	    
-	    xhr.onreadystatechange = function()
-	    {
-	        if (xhr.readyState == 4)
-	        {
-	            if (xhr.status == 200)
-	            {
-	            	succes(xhr.responseText);//xhr.responseXML si réponse au format XML
-	            }
-	            else
-	            {
-	                echec(xhr.status, xhr.responseText);
-	            }
-	        }
-	    };
-	    return xhr;
-	}
+	<script type="text/javascript">
+		function createXHR() {
+			if (window.XMLHttpRequest) //  Objet standard
+			{
+				xhr = new XMLHttpRequest(); //  Firefox, Safari, ...
+			} else if (window.ActiveXObject) //  Internet Explorer
+			{
+				xhr = new ActiveXObject("Msxml2.XMLHTTP");
+			}
 
-	function ajouter()
-	{
-	    var xhr = createXHR();
+			xhr.onreadystatechange = function() {
+				if (xhr.readyState == 4) {
+					if (xhr.status == 200) {
+						succes(xhr.responseText);//xhr.responseXML si réponse au format XML
+					} else {
+						echec(xhr.status, xhr.responseText);
+					}
+				}
+			};
+			return xhr;
+		}
 
-		datasFormulaire = "type="+encodeURIComponent("valeurType")+"&couleur="+encodeURIComponent("valeurCouleur");
-	    
-	    xhr.open("POST", "/rest/crayons/", true);
-	    xhr.setRequestHeader("Accept","application/json");
-	    xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded");
-	    xhr.send(datasFormulaire);
-	}
-	
-	function modifier()
-	{
-	    var xhr = createXHR();
+		function ajouter() {
+			var xhr = createXHR();
 
-		datasFormulaire = "type="+encodeURIComponent("nouveauType")+"&couleur="+encodeURIComponent("nouvelleCouleur");
-	    
-	    xhr.open("PUT", "/rest/crayons/2", true);
-	    xhr.setRequestHeader("Accept","application/json");
-	    xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded");
-	    xhr.send(datasFormulaire);
-	}
-	
-	function supprimer()
-	{
-	    var xhr = createXHR();   
+			/*datasFormulaire = "type=" + encodeURIComponent("valeurType")
+					+ "&couleur=" + encodeURIComponent("valeurCouleur");*/
 
-	    xhr.open("DELETE", "/rest/crayons/2", true);
-	    xhr.setRequestHeader("Accept","application/json");
-	    xhr.send(null);
-	}
-	
-	function lister()
-	{
-	    var xhr = createXHR();   
+			xhr.open("POST", "/rest/pizzas", true);
+			xhr.setRequestHeader("Accept", "application/json");
+			xhr.send(null);
+			lister();
+		}
 
-	    xhr.open("GET", "/rest/crayons", true);
-	    xhr.setRequestHeader("Accept","application/json");
-	    xhr.send(null);
-	}
-	
-	function succes(reponse)
-	{
-		document.getElementById("succes").innerHTML=reponse;
-		document.getElementById("echec").innerHTML="";
-	}
-	
-	function echec(codeReponse, reponse)
-	{
-		document.getElementById("echec").innerHTML=reponse;
-		document.getElementById("succes").innerHTML="";
-	}
-	
+		function modifier(id) {
+			var init = {
+				method: 'PUT',	
+			};
+			
+			fetch("/rest/pizzas/" + id, init).then(lister());
+		}
+
+		function supprimer(id) {
+			var init = {
+				method: 'DELETE',
+			};
+			
+			fetch("/rest/pizzas/" + id, init).then(lister());
+		}
+
+		function lister() {
+			fetch("/rest/pizzas").then(function(response) {
+				var contentType = response.headers.get("content-type");
+  				if(contentType && contentType.indexOf("application/json") !== -1) {
+    				return response.json().then(function(json) {
+      					var pizzas = json;
+      					var ligneToAdd = "";
+      					for (p in pizzas) {	
+      						ligneToAdd += "<tr>";
+      						ligneToAdd += "<td>" + pizzas[p].libelle + "</td>";
+      						ligneToAdd += "<td>" + pizzas[p].description + "</td>";
+      						ligneToAdd += "<td>" + pizzas[p].prix + "</td>";
+      						ligneToAdd += 
+      						"<td>" +
+      							"<input class='btn btn-success' type='button' value='Modifier' onclick='modifier(" + pizzas[p].id + ")'>" +
+      							"<input class='btn btn-danger' type='button' value='Supprimer' onclick='supprimer(" + pizzas[p].id + ")'>" +
+      						"</td>";
+      						ligneToAdd += "</tr>";
+      					}			
+      					document.getElementById("listePizzas").innerHTML = ligneToAdd;
+      					document.getElementById("echec").innerHTML = "";
+    				});
+  				}
+			});
+		}
+
+		function succes(response) 
+		{
+			var pizzas = JSON.parse(response);
+			var ligneToAdd = "";
+			for (p in pizzas) {	
+				ligneToAdd += "<tr>";
+				ligneToAdd += "<td>" + pizzas[p].libelle + "</td>";
+				ligneToAdd += "<td>" + pizzas[p].description + "</td>";
+				ligneToAdd += "<td>" + pizzas[p].prix + "</td>";
+				ligneToAdd += 
+				"<td>" +
+					"<input class='btn btn-success' type='button' value='Modifier' onclick='modifier(" + pizzas[p].id + ")'>" +
+					"<input class='btn btn-danger' type='button' value='Supprimer' onclick='supprimer(" + pizzas[p].id + ")'>" +
+				"</td>";
+				ligneToAdd += "</tr>";
+			}			
+
+			
+
+			document.getElementById("listePizzas").innerHTML = ligneToAdd;
+			document.getElementById("echec").innerHTML = "";
+		}
+
+		function echec(codeReponse, reponse) {
+			document.getElementById("echec").innerHTML = reponse;
+			document.getElementById("succes").innerHTML = "";
+		}
 	</script>
 </body>
 </html>
